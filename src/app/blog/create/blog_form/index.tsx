@@ -3,7 +3,6 @@
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -15,8 +14,14 @@ import { BlogSchema, BlogSchemaType } from "@/actions/blog/schema";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { handleFormAction } from "./action";
-import { Loader, LoaderCircle } from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import dynamic from "next/dynamic";
+import { generateSlug } from "@/utils/generate";
+
+const Editor = dynamic(() => import("../../../../components/block_editor"), {
+  ssr: false,
+});
 
 const BlogForm = () => {
   const form = useForm<BlogSchemaType>({
@@ -27,15 +32,21 @@ const BlogForm = () => {
       description: "",
       slug: "",
       title: "",
+      image: "",
     },
   });
 
   const isLoading = form.formState.isSubmitting;
+
+  const handleFormSubmit = async (data: BlogSchemaType) => {
+    await handleFormAction(data);
+  };
+
   return (
     <section className="my-10 p-6 mx-auto min-w-[1200px] flex-1">
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(handleFormAction)}
+          onSubmit={form.handleSubmit(handleFormSubmit)}
           className="space-y-8"
         >
           <FormField
@@ -69,6 +80,9 @@ const BlogForm = () => {
                       size="sm"
                       variant="outline"
                       className="border-primary/70 text-primary/70 hover:bg-primary/70"
+                      onClick={() =>
+                        field.onChange(generateSlug(form.getValues("title")))
+                      }
                     >
                       auto generate
                     </Button>
@@ -101,13 +115,19 @@ const BlogForm = () => {
               <FormItem className="grid gap-2">
                 <FormLabel>Content </FormLabel>
                 <FormControl>
-                  <Textarea {...field} />
+                  <Editor
+                    value={field.value ? JSON.parse(field.value) : undefined}
+                    onBlockChange={(value) =>
+                      field.onChange(JSON.stringify(value))
+                    }
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button disabled={isLoading}>
+
+          <Button type="submit" disabled={isLoading} className="ml-auto block">
             {isLoading ? (
               <LoaderCircle size={20} className="animate-spin" />
             ) : (
