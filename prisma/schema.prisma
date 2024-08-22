@@ -21,4 +21,18 @@ model User {
   lastName     String
   profileImage String
   createdAt    DateTime @default(now())
+  blog         Blog[]
+}
+
+model Blog {
+  id          String   @id @default(uuid())
+  title       String
+  content     Json
+  description String
+  image       String?
+  slug        String   @unique
+  createAt    DateTime @default(now())
+  updatedAt   DateTime @default(now())
+  User        User?    @relation(fields: [userId], references: [id])
+  userId      String?
 }
